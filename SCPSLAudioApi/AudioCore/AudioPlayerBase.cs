@@ -228,7 +228,7 @@ namespace SCPSLAudioApi.AudioCore
                 }
             }
             OnTrackSelected?.Invoke(this, index == -1, index, ref CurrentPlay);
-            Log.Info($"Loading Audio");
+            //Log.Info($"Loading Audio");
             if (AllowUrl && Uri.TryCreate(CurrentPlay, UriKind.Absolute, out Uri result))
             {
                 UnityWebRequest www = new UnityWebRequest(CurrentPlay, "GET");
@@ -276,7 +276,9 @@ namespace SCPSLAudioApi.AudioCore
             }
             
             CurrentPlayStream.Seek(0, SeekOrigin.Begin);
-            
+
+            if (VorbisReader != null)
+                VorbisReader.Dispose();
             VorbisReader = new NVorbis.VorbisReader(CurrentPlayStream);
 
             if (VorbisReader.Channels >= 2)
@@ -301,7 +303,7 @@ namespace SCPSLAudioApi.AudioCore
                 yield break;
             }
             OnTrackLoaded?.Invoke(this, index == -1, index, CurrentPlay);
-            Log.Info($"Playing {CurrentPlay} with samplerate of {VorbisReader.SampleRate}");
+            //Log.Info($"Playing {CurrentPlay} with samplerate of {VorbisReader.SampleRate}");
             samplesPerSecond = VoiceChatSettings.SampleRate * VoiceChatSettings.Channels;
             //_samplesPerSecond = VorbisReader.Channels * VorbisReader.SampleRate / 5;
             SendBuffer = new float[samplesPerSecond / 5 + HeadSamples];
@@ -311,8 +313,8 @@ namespace SCPSLAudioApi.AudioCore
             {
                 if (stopTrack)
                 {
-                    VorbisReader.SeekTo(VorbisReader.TotalSamples - 1);
                     stopTrack = false;
+                    break;
                 }
                 while (!ShouldPlay)
                 {
@@ -328,7 +330,7 @@ namespace SCPSLAudioApi.AudioCore
                     StreamBuffer.Enqueue(ReadBuffer[i]);
                 }
             }
-            Log.Info($"Track Complete.");
+            //Log.Info($"Track Complete.");
 
             int nextQueuepos = 0;
             if (Continue && Loop && index == -1)
